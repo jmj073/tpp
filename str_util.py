@@ -1,3 +1,4 @@
+from check_none import *
 from functional import *
 
 def is_char(x):
@@ -27,20 +28,23 @@ def is_paren(ch):
 def is_quote(ch):
     return (is_char(ch) and (ch in "\"'"))
 
-@do_notation(bind4none)
 def match_paren(ls, stk=[]):
-    for ch in ls:
-        if not stk:
-            ch = yield into_none(is_close_paren, ch)
-            stk.append(ch)
-        elif is_quote(ch) and ch == stk[-1]:
-            stk.pop()
-        elif not is_quote(stk[-1]):
-            if is_close_paren(ch):
-                open_paren = get_parent_pair(ch)
-                yield into_none(bind(eq, stk[-1]), open_paren)
-                stk.pop()
-            else:
+    ls = filter((lambda ch: is_paren(ch) or is_quote(ch)), ls)
+    try:
+        for ch in ls:
+            if not stk:
+                ch = there_is(into_none(is_open_paren, ch))
                 stk.append(ch)
+            elif is_quote(ch) and ch == stk[-1]:
+                stk.pop()
+            elif not is_quote(stk[-1]):
+                if is_close_paren(ch):
+                    open_paren = get_paren_pair(ch)
+                    there_is(into_none(bind(eq, stk[-1]), open_paren))
+                    stk.pop()
+                else:
+                    stk.append(ch)
+        return stk
 
-    return stk
+    except ThereIsNo:
+        return None

@@ -4,23 +4,30 @@ import atexit
 import os
 import readline
 from str_util import match_paren
-from functional import *
+from check_none import there_is, ThereIsNo
+import tpp
 
 PROMPT = ">> "
 CONT_PROMPT = ".. "
 
-@do_notation(bind4none)
 def read_input():
-    s = input(PROMPT)
-    stk = []
+    try:
+        s = input(PROMPT)
+        new_s = s
+        stk = []
 
-    while True:
-        stk = yield match_paren(s, stk)
-        if not stk:
-            break
-        s += input(CONT_PROMPT)
-    
-    return s
+        while True:
+            stk = there_is(match_paren(new_s, stk))
+            if not stk:
+                break
+            new_s = input(CONT_PROMPT)
+            s += new_s
+
+        return s
+
+    except ThereIsNo:
+        return None
+
 
 def init_repl():
     histfile = os.path.join(os.path.expanduser("~"), ".tpp_history")
@@ -44,11 +51,20 @@ def do_repl():
     init_repl()
 
     while True:
-        line = read_input()
+        s = read_input()
+
+        if s is None:
+            print("Invalid syntax!")
+            continue
+
+        ls = tpp.parse(s)
+        v = tpp.evaluate(ls, {})
+        if v is not None:
+            print(v)
 
 
 def main():
     return do_repl()
 
 if __name__ == "__main__":
-    do_repl()
+    main()
