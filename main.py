@@ -2,31 +2,28 @@
 
 import atexit
 import os
+import sys
 import readline
 from str_util import match_paren
-from check_none import there_is, ThereIsNo
 import tpp
+import tpp.core as core
 
 PROMPT = ">> "
 CONT_PROMPT = ".. "
 
 def read_input():
-    try:
-        s = input(PROMPT)
-        new_s = s
-        stk = []
+    s = input(PROMPT)
+    new_s = s
+    stk = []
 
-        while True:
-            stk = there_is(match_paren(new_s, stk))
-            if not stk:
-                break
-            new_s = input(CONT_PROMPT)
-            s += new_s
+    while True:
+        stk = match_paren(new_s, stk)
+        if not stk:
+            break
+        new_s = input(CONT_PROMPT)
+        s += new_s
 
-        return s
-
-    except ThereIsNo:
-        return None
+    return s
 
 
 def init_repl():
@@ -49,18 +46,20 @@ def init_repl():
 
 def do_repl():
     init_repl()
+    env = core.get_default_env()
 
     while True:
-        s = read_input()
-
-        if s is None:
-            print("Invalid syntax!")
-            continue
-
-        ls = tpp.parse(s)
-        v = tpp.evaluate(ls, {})
-        if v is not None:
-            print(v)
+        try:
+            s = read_input()
+        except EOFError:
+            break
+        except Exception as e:
+            print(e, file=sys.stderr)
+        else:
+            exp = tpp.parse(s)
+            v = tpp.evaluate(exp, env)
+            if v is not None:
+                print(v)
 
 
 def main():
