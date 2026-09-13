@@ -62,10 +62,20 @@ def __macro_when(ls, env):
 
 def __macro_fn(ls, env):
     t = __match_tuple(ls, ("args", "+exps"))
-    params = t["args"]
+    params = map(str, t["args"])
     exps = t["+exps"]
 
+    def func(*args):
+        table = dict(zip(params, args))
+        new_env = Environment(table, env)
+        ret = None
 
+        for e in exps:
+            ret = evaluate(e, new_env)
+
+        return ret
+
+    return func
 
 def get_default_env():
     return Environment({
@@ -75,4 +85,5 @@ def get_default_env():
         "eq": lambda a, b: a == b,
         "neq": lambda a, b: a != b,
         "when": Macro(__macro_when),
+        "fn": Macro(__macro_fn),
     })
