@@ -3,7 +3,7 @@
 import atexit
 import os
 import sys
-import readline
+import readline # TODO
 from str_util import match_paren
 import tpp
 import tpp.core as core
