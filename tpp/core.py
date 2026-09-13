@@ -1,4 +1,4 @@
-from tpp import evaluate, Macro
+from tpp import evaluate, Macro, Environment
 
 __all__ = [
     "get_default_env"
@@ -68,11 +68,11 @@ def __macro_fn(ls, env):
 
 
 def get_default_env():
-    return {
+    return Environment({
         "print": print,
         "add": lambda a, b: a + b,
         "sub": lambda a, b: a - b,
         "eq": lambda a, b: a == b,
         "neq": lambda a, b: a != b,
         "when": Macro(__macro_when),
-    }
+    })

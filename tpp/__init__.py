@@ -30,6 +30,21 @@ class Macro:
 
     def __call__(self, ls, env):
         return self.f(ls, env)
+class Environment:
+    def __init__(self, table=dict(), parent=None):
+        self.table = table
+        self.parent = parent
+
+    def __setitem__(self, key, value):
+        self.table[key] = value
+
+    def __getitem__(self, key):
+        try:
+            return self.table[key]
+        except KeyError:
+            if self.parent is None:
+                raise KeyError()
+            return self.parent[key]
 
 def parse(s):
     return eval(s, {}, Symboler())
