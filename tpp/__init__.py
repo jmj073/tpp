@@ -30,6 +30,7 @@ class Macro:
 
     def __call__(self, ls, env):
         return self.f(ls, env)
+
 class Environment:
     def __init__(self, table=dict(), parent=None):
         self.table = table
@@ -58,7 +59,7 @@ def evaluate(exp, env):
             return __eval_iterable(exp, env)
 
         if isinstance(exp, Symbol):
-            return env[str(exp)]
+            return env[str(exp)] # TODO
 
         return exp
 

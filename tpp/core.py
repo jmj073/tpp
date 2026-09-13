@@ -4,6 +4,7 @@ __all__ = [
     "get_default_env"
 ]
 
+# TODO
 def __match_tuple(target, pattern):
     assert isinstance(pattern, tuple) or isinstance(pattern, str)
 
@@ -77,6 +78,14 @@ def __macro_fn(ls, env):
 
     return func
 
+def __macro_define(ls, env):
+    t = __match_tuple(ls, ("sym", "exp"))
+    name = str(t["sym"])
+    v = evaluate(t["exp"], env)
+    env[name] = v
+
+    return None
+
 def get_default_env():
     return Environment({
         "print": print,
@@ -86,4 +95,5 @@ def get_default_env():
         "neq": lambda a, b: a != b,
         "when": Macro(__macro_when),
         "fn": Macro(__macro_fn),
+        "define": Macro(__macro_define),
     })
