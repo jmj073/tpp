@@ -7,6 +7,7 @@ import readline # TODO
 from str_util import match_paren
 import tpp
 import tpp.core as core
+from result import Ok, Err, Result, is_ok, is_err
 
 PROMPT = ">> "
 CONT_PROMPT = ".. "
@@ -17,13 +18,15 @@ def read_input():
     stk = []
 
     while True:
-        stk = match_paren(new_s, stk)
-        if not stk:
+        matched = match_paren(new_s, stk)
+        if not matched:
+            return Err(f"Unmatched parentheses: {new_s}")
+        if len(stk) == 0:
             break
         new_s = input(CONT_PROMPT)
         s += new_s
 
-    return s
+    return Ok(s)
 
 
 def init_repl():
@@ -50,16 +53,28 @@ def do_repl():
 
     while True:
         try:
-            s = read_input()
+            res = read_input()
         except EOFError:
             break
+        if res.is_err():
+            print(res.err_value, file=sys.stderr)
+            continue
+
+        try:
+            s = res.ok_value
+            exp = tpp.parse(s)
         except Exception as e:
             print(e, file=sys.stderr)
-        else:
-            exp = tpp.parse(s)
+            continue
+
+        try:
             v = tpp.evaluate(exp, env)
-            if v is not None:
-                print(v)
+        except Exception as e:
+            print(e, file=sys.stderr)
+            continue
+
+        if v is not None:
+            print(v)
 
 
 def main():

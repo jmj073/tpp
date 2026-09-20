@@ -28,21 +28,19 @@ def is_quote(ch):
 def match_paren(s, stk=[]):
     ls = filter((lambda ch: is_paren(ch) or is_quote(ch)), s)
 
-    try:
-        for ch in ls:
-            if not stk:
-                assert is_open_paren(ch)
-                stk.append(ch)
-            elif is_quote(ch) and ch == stk[-1]:
+    for ch in ls:
+        if not stk:
+            if not is_open_paren(ch):
+                return False
+            stk.append(ch)
+        elif is_quote(ch) and ch == stk[-1]:
+            stk.pop()
+        elif not is_quote(stk[-1]):
+            if is_close_paren(ch):
+                open_paren = get_paren_pair(ch)
+                if stk[-1] != open_paren:
+                    return False
                 stk.pop()
-            elif not is_quote(stk[-1]):
-                if is_close_paren(ch):
-                    open_paren = get_paren_pair(ch)
-                    assert stk[-1] == open_paren
-                    stk.pop()
-                else:
-                    stk.append(ch)
-        return stk
-
-    except AssertionError:
-        raise Exception(f"Unmatched parentheses: {s}")
+            else:
+                stk.append(ch)
+    return True

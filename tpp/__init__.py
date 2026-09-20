@@ -7,6 +7,11 @@ __all__ = [
     "Macro",
 ]
 
+class EvaluationFailed(Exception):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        
+
 class Symbol:
     def __init__(self, s):
         self.s = s
@@ -16,6 +21,12 @@ class Symbol:
 
     def __str__(self):
         return self.s
+
+    def __hash__(self): # TODO
+        return hash(self.s)
+
+    def __eq__(self, other):
+        return self.s == other.s
 
 class Symboler:
     def __init__(self):
@@ -51,20 +62,31 @@ def parse(s):
     return eval(s, {}, Symboler())
 
 def __eval_iterable(exp, env):
+    if isinstance(exp, dict):
+        return dict(map((lambda tup: (evaluate(tup[0], env), evaluate(tup[1], env))), exp.items()))
     return exp.__class__(map((lambda e: evaluate(e, env)), exp))
+
+def __is_nested_literal(exp):
+    if isinstance(exp, str):
+        return False
+
+    return isinstance(exp, set) \
+        or isinstance(exp, list) \
+        or isinstance(exp, dict)
+
 
 def evaluate(exp, env):
     if not isinstance(exp, tuple):
-        if not isinstance(exp, str) and isinstance(exp, Iterable):
+        if __is_nested_literal(exp):
             return __eval_iterable(exp, env)
-
         if isinstance(exp, Symbol):
-            return env[str(exp)] # TODO
+            return env[exp]
 
         return exp
 
     tup = exp
-    assert len(tup) != 0
+    if len(tup) == 0:
+        raise EvaluationFailed(f"Invalid Expression: {tup}")
     f = evaluate(tup[0], env)
 
     if isinstance(f, Macro):

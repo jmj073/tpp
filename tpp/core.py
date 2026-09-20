@@ -1,19 +1,41 @@
-from tpp import evaluate, Macro, Environment
+from tpp import evaluate, Macro, Environment, Symbol
+from operator import *
+from sys import maxsize
 
 __all__ = [
     "get_default_env"
 ]
 
+class Quantifier:
+    def __init__(self, pat, r=range(maxsize)):
+        self.pat = pat
+        self.r = r
+
+Q = type(
+    "QuantifierGenerator", (object,),
+    {    "__add__", (lambda _, pat: Quantifier(pat, range(1, maxsize))) },
+    {    "__mul__", (lambda _, pat: Quantifier(pat, range(0, maxsize))) },
+    { "__matmul__", (lambda _, pat: Quantifier(pat, range(0,       2))) },
+)
+
 # TODO
 def __match_tuple(target, pattern):
-    assert isinstance(pattern, tuple) or isinstance(pattern, str)
+    assert isinstance(target, tuple)
+
+    if isinstance(pattern, Quantifier):
+        q = Quantifier(pattern, range(1, 2))
+    else:
+        q = pattern
+
+    assert target
 
     res = dict()
-    esac = (isinstance(target, tuple), isinstance(pattern, tuple))
+    esac = (isinstance(target[0], tuple), isinstance(q.pat, tuple))
 
     match esac:
         case (False, False):
-            res[pattern] = target
+            res[q.pat] = target[0]
+            res.update( # TODO
         case (False, True):
             raise Exception(f"Unmatched pattern: target[{target}], pattern[{pattern}]")
         case (True, False):
@@ -63,7 +85,7 @@ def __macro_when(ls, env):
 
 def __macro_fn(ls, env):
     t = __match_tuple(ls, ("args", "+exps"))
-    params = map(str, t["args"])
+    params = t["args"]
     exps = t["+exps"]
 
     def func(*args):
@@ -80,20 +102,22 @@ def __macro_fn(ls, env):
 
 def __macro_define(ls, env):
     t = __match_tuple(ls, ("sym", "exp"))
-    name = str(t["sym"])
+    name = t["sym"]
     v = evaluate(t["exp"], env)
     env[name] = v
 
     return None
 
 def get_default_env():
+    S = Symbol
     return Environment({
-        "print": print,
-        "add": lambda a, b: a + b,
-        "sub": lambda a, b: a - b,
-        "eq": lambda a, b: a == b,
-        "neq": lambda a, b: a != b,
-        "when": Macro(__macro_when),
-        "fn": Macro(__macro_fn),
-        "define": Macro(__macro_define),
+        S("print"): print,
+        S("add"): add,
+        S("sub"): sub,
+        S("mul"): mul,
+        S("eq"): eq,
+        S("ne"): ne,
+        S("when"): Macro(__macro_when),
+        S("fn"): Macro(__macro_fn),
+        S("define"): Macro(__macro_define),
     })
